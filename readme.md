@@ -6,6 +6,14 @@
 
 A smart PDF converter that transforms documents into well-formatted Markdown using AI-powered image analysis. Extract text, analyze charts, diagrams, code snippets, and UI elements with intelligent classification.
 
+
+## 🎥 Demo
+
+![Docfy.AI App Screenshot](assets/app.gif)
+
+*Real-time conversion progress with live SignalR updates*
+
+
 ## 🚀 Features
 
 - **PDF to Markdown Conversion**: Converts any PDF document into clean, readable Markdown
