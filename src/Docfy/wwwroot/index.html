@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmos PDF Converter | Studio</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.12/signalr.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+
+    <style>
+        :root {
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a25;
+            --bg-elevated: #252536;
+            --bg-hover: #2d2d42;
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(255, 255, 255, 0.15);
+            --text-primary: #fafafa;
+            --text-secondary: #a1a1aa;
+            --text-muted: #71717a;
+            --accent-primary: #6366f1;
+            --accent-secondary: #8b5cf6;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-elevated);
+            border-radius: 4px;
+        }
+
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 72px;
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.5rem;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .brand-text h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--text-primary), var(--accent-primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .connection-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+
+            .connection-badge.connected {
+                border-color: var(--accent-success);
+                background: rgba(16, 185, 129, 0.1);
+            }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-danger);
+            position: relative;
+        }
+
+        .connected .pulse-dot {
+            background: var(--accent-success);
+        }
+
+        .pulse-dot::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            background: inherit;
+            opacity: 0.4;
+            animation: pulse-ring 2s infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        .app-container {
+            padding-top: 72px;
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 2rem;
+            max-width: 1920px;
+            margin: 0 auto;
+            padding-left: 2.5rem;
+            padding-right: 2.5rem;
+            padding-bottom: 2.5rem;
+        }
+
+        .sidebar {
+            position: sticky;
+            top: 96px;
+            height: calc(100vh - 120px);
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            overflow: hidden;
+        }
+
+        .upload-zone {
+            background: linear-gradient(145deg, var(--bg-secondary), var(--bg-tertiary));
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+            .upload-zone:hover {
+                border-color: var(--accent-primary);
+                transform: translateY(-2px);
+            }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 1rem;
+            color: var(--accent-primary);
+        }
+
+        .upload-hint {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            border: 1px solid var(--border-color);
+        }
+
+        .queue-section {
+            flex: 1;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .queue-header {
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .queue-count {
+            background: var(--accent-primary);
+            color: var(--text-primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        .conversions-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .conversion-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            position: relative;
+        }
+
+            .conversion-card:hover {
+                border-color: var(--border-hover);
+                transform: translateX(4px);
+            }
+
+            .conversion-card.active {
+                background: var(--bg-elevated);
+                border-color: var(--accent-primary);
+                box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+            }
+
+            .conversion-card.completed {
+                border-left: 3px solid var(--accent-success);
+            }
+
+            .conversion-card.error {
+                border-left: 3px solid var(--accent-danger);
+            }
+
+        .conversion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
+        .conversion-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 140px;
+        }
+
+        .conversion-status {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-processing {
+            background: rgba(99, 102, 241, 0.2);
+            color: var(--accent-primary);
+        }
+
+        .status-completed {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-success);
+        }
+
+        .status-error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--accent-danger);
+        }
+
+        .status-queued {
+            background: var(--bg-hover);
+            color: var(--text-muted);
+        }
+
+        .conversion-progress {
+            height: 4px;
+            background: var(--bg-hover);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .conversion-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .conversion-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-md);
+            border: none;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+            .btn-icon:hover {
+                background: var(--bg-hover);
+                color: var(--text-primary);
+            }
+
+            .btn-icon.delete:hover {
+                background: rgba(239, 68, 68, 0.2);
+                color: var(--accent-danger);
+            }
+
+        .main-stage {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-align: center;
+            padding: 4rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 2px dashed var(--border-color);
+        }
+
+        .conversion-workspace {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+            animation: fadeIn 0.3s;
+        }
+
+            .conversion-workspace.active {
+                display: flex;
+            }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .workspace-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+        }
+
+        .toolbar-info h2 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .toolbar-info .subtitle {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: var(--font-sans);
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+            .btn-primary:hover:not(:disabled) {
+                background: var(--accent-secondary);
+                box-shadow: var(--shadow-glow);
+            }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+            .btn-secondary:hover {
+                background: var(--bg-hover);
+            }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .collapsible-panel {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+            .panel-header:hover {
+                background: var(--bg-tertiary);
+            }
+
+            .panel-header h3 {
+                font-size: 0.875rem;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: var(--text-secondary);
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+            }
+
+        .panel-toggle {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s;
+            color: var(--text-muted);
+        }
+
+            .panel-toggle.collapsed {
+                transform: rotate(-90deg);
+            }
+
+        .panel-content {
+            max-height: 600px;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+            .panel-content.collapsed {
+                max-height: 0;
+            }
+
+        .pages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1rem;
+            padding: 0 1.5rem 1.5rem;
+        }
+
+        .page-thumbnail {
+            aspect-ratio: 3/4;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            border: 2px solid var(--border-color);
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+            .page-thumbnail:hover {
+                transform: translateY(-4px) scale(1.02);
+                border-color: var(--accent-primary);
+                box-shadow: var(--shadow-lg);
+            }
+
+            .page-thumbnail.processing {
+                border-color: var(--accent-primary);
+            }
+
+            .page-thumbnail.completed {
+                border-color: var(--accent-success);
+            }
+
+            .page-thumbnail.pending {
+                opacity: 0.5;
+                filter: grayscale(0.6);
+            }
+
+            .page-thumbnail img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+        .page-info-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(10,10,15,0.8) 0%, transparent 40%, rgba(10,10,15,0.9) 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.75rem;
+        }
+
+        .page-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: rgba(99, 102, 241, 0.9);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 600;
+            align-self: flex-start;
+            backdrop-filter: blur(4px);
+        }
+
+        .page-status-bottom {
+            text-align: center;
+        }
+
+        .page-progress-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+            margin-bottom: 0.25rem;
+        }
+
+        .page-mini-progress {
+            height: 3px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .page-mini-progress-bar {
+            height: 100%;
+            background: var(--accent-success);
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+
+        .processing-spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 0.5rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .content-editor {
+            flex: 1;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 400px;
+        }
+
+        .editor-tabs {
+            display: flex;
+            gap: 0.25rem;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .editor-tab {
+            padding: 0.625rem 1.25rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+            transition: all 0.15s;
+        }
+
+            .editor-tab:hover {
+                color: var(--text-primary);
+                background: var(--bg-hover);
+            }
+
+            .editor-tab.active {
+                color: var(--text-primary);
+                background: var(--bg-elevated);
+            }
+
+        .editor-panels {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .editor-panel {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s;
+            display: flex;
+        }
+
+            .editor-panel.active {
+                opacity: 1;
+                visibility: visible;
+            }
+
+        .raw-textarea {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: none;
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.7;
+            resize: none;
+            outline: none;
+        }
+
+        .markdown-preview {
+            padding: 2rem;
+            background: var(--bg-primary);
+            overflow: auto;
+            flex: 1;
+        }
+
+        .images-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+            padding: 0 1.5rem 1.5rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .image-analysis-card {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .image-preview-container {
+            aspect-ratio: 16/10;
+            background: var(--bg-secondary);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .image-preview-container img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+
+        .image-type-badge {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: var(--radius-md);
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-code {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-success);
+        }
+
+        .badge-chart {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--accent-info);
+        }
+
+        .badge-decorative {
+            background: var(--bg-hover);
+            color: var(--text-muted);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+            .modal-overlay.active {
+                display: flex;
+            }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 1200px;
+            max-height: 90vh;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            overflow: hidden;
+        }
+
+        .modal-preview {
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: all 0.2s;
+            z-index: 10;
+        }
+
+            .modal-nav:hover {
+                background: var(--accent-primary);
+                border-color: var(--accent-primary);
+            }
+
+            .modal-nav.prev {
+                left: 1rem;
+            }
+
+            .modal-nav.next {
+                right: 1rem;
+            }
+
+            .modal-nav:disabled {
+                opacity: 0.3;
+                cursor: not-allowed;
+            }
+
+        .modal-preview img {
+            max-width: 100%;
+            max-height: 70vh;
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-md);
+        }
+
+        .modal-page-indicator {
+            position: absolute;
+            bottom: 1rem;
+            background: rgba(10,10,15,0.8);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+        }
+
+        .modal-sidebar {
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+            .modal-close:hover {
+                background: var(--accent-danger);
+                border-color: var(--accent-danger);
+                color: white;
+            }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .status-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+        }
+
+            .status-item.processing {
+                border-color: var(--accent-primary);
+            }
+
+            .status-item.completed {
+                border-color: var(--accent-success);
+            }
+
+        .processing-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .processing-item {
+            padding: 0.875rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .processing-item.processing {
+                border-left-color: var(--accent-primary);
+            }
+
+            .processing-item.completed {
+                border-left-color: var(--accent-success);
+            }
+
+        .toast-container {
+            position: fixed;
+            top: 96px;
+            right: 2rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .toast {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            animation: slideInRight 0.3s;
+        }
+
+            .toast.success {
+                border-left-color: var(--accent-success);
+            }
+
+            .toast.error {
+                border-left-color: var(--accent-danger);
+            }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .filter-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid transparent;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            cursor: pointer;
+            border-radius: var(--radius-md);
+        }
+
+            .filter-tab:hover {
+                color: var(--text-primary);
+                background: var(--bg-hover);
+            }
+
+            .filter-tab.active {
+                color: var(--accent-primary);
+                background: rgba(99, 102, 241, 0.1);
+                border-color: rgba(99, 102, 241, 0.3);
+            }
+
+        @media (max-width: 1200px) {
+            .app-container {
+                grid-template-columns: 350px 1fr;
+            }
+
+            .modal-content {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-sidebar {
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .app-container {
+                grid-template-columns: 1fr;
+                padding: 80px 1rem 1rem;
+            }
+
+            .sidebar {
+                position: relative;
+                height: auto;
+                max-height: 400px;
+            }
+        }
+
+        /* Scroll no painel de páginas */
+        #pagesContent {
+            overflow-y: auto !important;
+        }
+
+        /* Ajuste para o grid não vazar do container */
+        #pagesGrid {
+            max-height: 580px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+            /* Scroll suave */
+            #pagesContent::-webkit-scrollbar,
+            #pagesGrid::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            #pagesContent::-webkit-scrollbar-track,
+            #pagesGrid::-webkit-scrollbar-track {
+                background: var(--bg-tertiary);
+                border-radius: 3px;
+            }
+
+            #pagesContent::-webkit-scrollbar-thumb,
+            #pagesGrid::-webkit-scrollbar-thumb {
+                background: var(--accent-primary);
+                border-radius: 3px;
+            }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <div class="brand">
+            <div class="brand-icon">C</div>
+            <div class="brand-text">
+                <h1>Cosmos Converter</h1>
+            </div>
+        </div>
+        <div class="connection-badge" id="connectionBadge">
+            <span class="pulse-dot"></span>
+            <span id="connectionText">Connecting...</span>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="upload-zone" id="uploadZone">
+                <input type="file" id="fileInput" accept=".pdf" multiple hidden>
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" />
+                </svg>
+                <h3>Drop PDFs here</h3>
+                <p>or click to browse files</p>
+                <div class="upload-hint">Supports multiple files • Max 50MB</div>
+            </div>
+
+            <div class="queue-section">
+                <div class="queue-header">
+                    <h3>Active Conversions</h3>
+                    <span class="queue-count" id="queueCount">0</span>
+                </div>
+                <div class="conversions-list" id="conversionsList"></div>
+            </div>
+        </aside>
+
+        <main class="main-stage">
+            <div class="empty-state" id="emptyState">
+                <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="width: 80px; height: 80px; margin-bottom: 1.5rem; opacity: 0.3;">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <h2>No conversion selected</h2>
+                <p>Select a conversion from the list or upload new files</p>
+            </div>
+
+            <div class="conversion-workspace" id="workspace">
+                <div class="workspace-toolbar">
+                    <div class="toolbar-info">
+                        <h2 id="workspaceTitle">document.pdf</h2>
+                        <div class="subtitle">
+                            <span id="workspaceStatus">Ready</span>
+                            <span>•</span>
+                            <span id="workspaceProgress">0%</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <button class="btn btn-secondary" id="resetStorageBtn" title="Clear all saved data">Clear Cache</button>
+                        <button class="btn btn-primary" id="downloadBtn" disabled>Download Markdown</button>
+                    </div>
+                </div>
+
+                <!-- Collapsible: Pages -->
+                <div class="collapsible-panel" id="pagesPanel">
+                    <div class="panel-header" onclick="app.togglePanel('pages')">
+                        <h3>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="21" x2="9" y2="9"></line>
+                            </svg>
+                            Page Processing Status
+                        </h3>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <span style="font-size: 0.875rem; color: var(--text-muted);" id="pagesSummary">0 pages</span>
+                            <svg class="panel-toggle" id="pagesToggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="panel-content" id="pagesContent">
+                        <div class="pages-grid" id="pagesGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Editor -->
+                <div class="content-editor" style="border: 1px solid var(--border-color);">
+                    <div class="editor-tabs">
+                        <button class="editor-tab active" data-tab="preview">Preview</button>
+                        <button class="editor-tab" data-tab="raw">Markdown</button>
+                        <button class="editor-tab" data-tab="split">Split</button>
+                    </div>
+                    <div class="editor-panels">
+                        <div class="editor-panel active" id="panel-preview">
+                            <div class="markdown-preview" id="previewContent"></div>
+                        </div>
+                        <div class="editor-panel" id="panel-raw">
+                            <textarea class="raw-textarea" id="rawEditor" readonly></textarea>
+                        </div>
+                        <div class="editor-panel" id="panel-split">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; height: 100%;">
+                                <textarea class="raw-textarea" id="splitRawEditor" readonly></textarea>
+                                <div class="markdown-preview" id="splitPreview"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Collapsible: Images -->
+                <div class="collapsible-panel" id="imagesPanel">
+                    <div class="panel-header" onclick="app.togglePanel('images')">
+                        <h3>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                <polyline points="21 15 16 10 5 21"></polyline>
+                            </svg>
+                            Extracted Images
+                        </h3>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="filter-tabs">
+                                <button class="filter-tab active" data-filter="all" onclick="event.stopPropagation(); app.filterImages('all')">All</button>
+                                <button class="filter-tab" data-filter="content" onclick="event.stopPropagation(); app.filterImages('content')">Content</button>
+                                <button class="filter-tab" data-filter="decorative" onclick="event.stopPropagation(); app.filterImages('decorative')">Decorative</button>
+                            </div>
+                            <svg class="panel-toggle" id="imagesToggle" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="panel-content" id="imagesContent">
+                        <div class="images-grid" id="imagesGrid"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="pageModal">
+        <div class="modal-content">
+            <div class="modal-preview">
+                <button class="modal-nav prev" id="modalPrev" onclick="app.navigateModal(-1)">‹</button>
+                <img src="" alt="Page" id="modalImage">
+                <button class="modal-nav next" id="modalNext" onclick="app.navigateModal(1)">›</button>
+                <div class="modal-page-indicator" id="modalIndicator">Page 1 of 1</div>
+            </div>
+            <div class="modal-sidebar">
+                <div class="modal-header">
+                    <h3 id="modalTitle">Page Details</h3>
+                    <button class="modal-close" onclick="app.closeModal()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="status-list">
+                        <div class="status-item" id="modalTextStatus">
+                            <span>📝</span>
+                            <div>
+                                <div style="font-weight: 600;">Text Extraction</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);" id="modalTextDetail">Waiting...</div>
+                            </div>
+                        </div>
+                        <div class="status-item" id="modalImageStatus">
+                            <span>🖼️</span>
+                            <div>
+                                <div style="font-weight: 600;">Image Analysis</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);" id="modalImageDetail">Waiting...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 style="margin-bottom: 1rem; color: var(--text-secondary); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">Images on this Page</h4>
+                    <div class="processing-list" id="modalImagesList">
+                        <div style="color: var(--text-muted); text-align: center; padding: 2rem;">No images available</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        class CosmosConverter {
+            constructor() {
+                this.connection = null;
+                this.conversions = new Map();
+                this.activeConversionId = null;
+                this.connectionId = null;
+                this.currentModalPageIndex = 0;
+                this.processingQueue = []; // Fila para controle de eventos por conversão
+
+                // Persistência
+                this.storageKey = 'cosmosConverter_state_v3';
+                this.collapsedPanels = new Set();
+
+                // Configurar marked para renderização segura
+                marked.setOptions({
+                    gfm: true,
+                    breaks: true,
+                    highlight: function (code, lang) {
+                        if (Prism.languages[lang]) {
+                            return Prism.highlight(code, Prism.languages[lang], lang);
+                        }
+                        return code;
+                    }
+                });
+
+                this.initElements();
+                this.loadFromStorage();
+                this.initSignalR();
+                this.bindEvents();
+            }
+
+            initElements() {
+                this.uploadZone = document.getElementById('uploadZone');
+                this.fileInput = document.getElementById('fileInput');
+                this.connectionBadge = document.getElementById('connectionBadge');
+                this.connectionText = document.getElementById('connectionText');
+                this.conversionsList = document.getElementById('conversionsList');
+                this.queueCount = document.getElementById('queueCount');
+                this.emptyState = document.getElementById('emptyState');
+                this.workspace = document.getElementById('workspace');
+                this.workspaceTitle = document.getElementById('workspaceTitle');
+                this.workspaceStatus = document.getElementById('workspaceStatus');
+                this.workspaceProgress = document.getElementById('workspaceProgress');
+                this.pagesGrid = document.getElementById('pagesGrid');
+                this.pagesSummary = document.getElementById('pagesSummary');
+                this.previewContent = document.getElementById('previewContent');
+                this.rawEditor = document.getElementById('rawEditor');
+                this.splitRawEditor = document.getElementById('splitRawEditor');
+                this.splitPreview = document.getElementById('splitPreview');
+                this.imagesGrid = document.getElementById('imagesGrid');
+                this.downloadBtn = document.getElementById('downloadBtn');
+                this.pageModal = document.getElementById('pageModal');
+                this.modalImage = document.getElementById('modalImage');
+                this.modalTitle = document.getElementById('modalTitle');
+                this.modalIndicator = document.getElementById('modalIndicator');
+                this.modalPrev = document.getElementById('modalPrev');
+                this.modalNext = document.getElementById('modalNext');
+            }
+
+            saveToStorage() {
+                try {
+                    const data = {
+                        conversions: Array.from(this.conversions.entries()).map(([id, conv]) => ({
+                            id,
+                            fileName: conv.fileName,
+                            status: conv.status,
+                            progress: conv.progress,
+                            totalPages: conv.totalPages,
+                            markdown: conv.markdown,
+                            pages: conv.pages.map(p => ({
+                                number: p.number,
+                                status: p.status,
+                                thumbnail: p.thumbnail,
+                                imagesTotal: p.imagesTotal,
+                                imagesProcessed: p.imagesProcessed,
+                                textProgress: p.textProgress,
+                                imageProgress: p.imageProgress,
+                                currentImageName: p.currentImageName,
+                                images: []// p.images || []
+                            })),
+                            images: [],//conv.images,
+                            lastAccess: Date.now()
+                        })),
+                        activeConversionId: this.activeConversionId,
+                        collapsedPanels: Array.from(this.collapsedPanels)
+                    };
+                    localStorage.setItem(this.storageKey, JSON.stringify(data));
+                } catch (e) {
+                    console.error('Failed to save state:', e);
+                }
+            }
+
+            async loadFromStorage() {
+                try {
+                    const saved = localStorage.getItem(this.storageKey);
+                    if (!saved) return;
+
+                    const data = JSON.parse(saved);
+
+                    if (data.collapsedPanels) {
+                        this.collapsedPanels = new Set(data.collapsedPanels);
+                        this.collapsedPanels.forEach(panel => {
+                            const content = document.getElementById(panel + 'Content');
+                            const toggle = document.getElementById(panel + 'Toggle');
+                            if (content && toggle) {
+                                content.classList.add('collapsed');
+                                toggle.classList.add('collapsed');
+                            }
+                        });
+                    }
+
+                    if (data.conversions && data.conversions.length > 0) {
+                        for (const convData of data.conversions) {
+                            const conversion = {
+                                id: convData.id,
+                                fileName: convData.fileName,
+                                status: convData.status === 'processing' ? 'interrupted' : convData.status,
+                                progress: convData.progress,
+                                totalPages: convData.totalPages,
+                                markdown: convData.markdown,
+                                pages: convData.pages || [],
+                                images: convData.images || [],
+                                file: null
+                            };
+
+                            this.conversions.set(convData.id, conversion);
+                            this.renderConversionCard(conversion);
+                        }
+
+                        this.updateQueueCount();
+
+                        if (data.activeConversionId && this.conversions.has(data.activeConversionId)) {
+                            this.selectConversion(data.activeConversionId);
+                        }
+                    }
+                } catch (e) {
+                    console.error('Failed to load state:', e);
+                }
+            }
+
+            togglePanel(panelName) {
+                const content = document.getElementById(panelName + 'Content');
+                const toggle = document.getElementById(panelName + 'Toggle');
+
+                if (content.classList.contains('collapsed')) {
+                    content.classList.remove('collapsed');
+                    toggle.classList.remove('collapsed');
+                    this.collapsedPanels.delete(panelName);
+                } else {
+                    content.classList.add('collapsed');
+                    toggle.classList.add('collapsed');
+                    this.collapsedPanels.add(panelName);
+                }
+
+                this.saveToStorage();
+            }
+
+            clearStorage() {
+                if (confirm('Clear all saved conversions? This cannot be undone.')) {
+                    localStorage.removeItem(this.storageKey);
+                    this.conversions.clear();
+                    this.conversionsList.innerHTML = '';
+                    this.updateQueueCount();
+                    this.activeConversionId = null;
+                    this.workspace.classList.remove('active');
+                    this.emptyState.style.display = 'flex';
+                    this.showToast('Cache cleared', 'success');
+                }
+            }
+
+            async initSignalR() {
+                this.connection = new signalR.HubConnectionBuilder()
+                    .withUrl('/conversionHub')
+                    .withAutomaticReconnect()
+                    .configureLogging(signalR.LogLevel.Warning)
+                    .build();
+
+                this.connection.on('Connected', (data) => {
+                    this.connectionId = data.ConnectionId;
+                    this.updateConnectionStatus(true);
+                });
+
+                // Handlers que identificam a conversão correta
+                this.connection.on('ProgressUpdate', (data) => this.routeEventToConversion(data, 'progress'));
+                this.connection.on('PageProgress', (data) => this.routeEventToConversion(data, 'page'));
+                this.connection.on('ImageProgress', (data) => this.routeEventToConversion(data, 'image'));
+                this.connection.on('ConversionCompleted', (data) => this.routeEventToConversion(data, 'completed'));
+                this.connection.on('ConversionError', (data) => this.routeEventToConversion(data, 'error'));
+                this.connection.on('ConversionCancelled', (data) => this.routeEventToConversion(data, 'cancelled'));
+
+                try {
+                    await this.connection.start();
+                } catch (err) {
+                    this.updateConnectionStatus(false);
+                }
+            }
+
+            updateConnectionStatus(connected) {
+                this.connectionBadge.classList.toggle('connected', connected);
+                this.connectionText.textContent = connected ? 'Connected' : 'Disconnected';
+            }
+
+            bindEvents() {
+                this.uploadZone.addEventListener('click', () => this.fileInput.click());
+                this.fileInput.addEventListener('change', (e) => this.handleFiles(e.target.files));
+
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(e => {
+                    this.uploadZone.addEventListener(e, (ev) => { ev.preventDefault(); ev.stopPropagation(); });
+                });
+
+                ['dragenter', 'dragover'].forEach(e => {
+                    this.uploadZone.addEventListener(e, () => this.uploadZone.classList.add('dragover'));
+                });
+
+                ['dragleave', 'drop'].forEach(e => {
+                    this.uploadZone.addEventListener(e, () => this.uploadZone.classList.remove('dragover'));
+                });
+
+                this.uploadZone.addEventListener('drop', (e) => this.handleFiles(e.dataTransfer.files));
+
+                document.querySelectorAll('.editor-tab').forEach(tab => {
+                    tab.addEventListener('click', () => this.switchTab(tab.dataset.tab));
+                });
+
+                this.downloadBtn.addEventListener('click', () => this.downloadActive());
+                document.getElementById('resetStorageBtn').addEventListener('click', () => this.clearStorage());
+            }
+
+            async handleFiles(files) {
+                if (!this.connectionId) {
+                    this.showToast('Not connected yet', 'warning');
+                    return;
+                }
+
+                Array.from(files).forEach(file => {
+                    if (!file.name.endsWith('.pdf')) {
+                        this.showToast(`${file.name} is not a PDF`, 'error');
+                        return;
+                    }
+                    this.startConversion(file);
+                });
+            }
+
+            async startConversion(file) {
+                const id = crypto.randomUUID();
+                const conversion = {
+                    id,
+                    file,
+                    fileName: file.name,
+                    status: 'uploading',
+                    progress: 0,
+                    pages: [],
+                    images: [],
+                    markdown: ''
+                };
+
+                this.conversions.set(id, conversion);
+                this.renderConversionCard(conversion);
+                this.updateQueueCount();
+
+                if (!this.activeConversionId) {
+                    this.selectConversion(id);
+                }
+
+                // Generate thumbnails
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+                    conversion.totalPages = pdf.numPages;
+                    conversion.pages = Array.from({ length: pdf.numPages }, (_, i) => ({
+                        number: i + 1,
+                        status: 'pending',
+                        thumbnail: null,
+                        imagesTotal: 0,
+                        imagesProcessed: 0,
+                        textProgress: 0,
+                        imageProgress: 0,
+                        currentImageName: null,
+                        images: []
+                    }));
+
+                    for (let i = 1; i <= pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const viewport = page.getViewport({ scale: 0.4 });
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = viewport.width;
+                        canvas.height = viewport.height;
+                        await page.render({ canvasContext: ctx, viewport }).promise;
+                        conversion.pages[i - 1].thumbnail = canvas.toDataURL('image/jpeg', 0.8);
+
+                        if (this.activeConversionId === id) {
+                            this.updatePageThumbnail(conversion.pages[i - 1], i - 1);
+                        }
+                    }
+
+                    if (this.activeConversionId === id) {
+                        this.pagesSummary.textContent = `${pdf.numPages} pages`;
+                    }
+                } catch (err) {
+                    console.error('Thumbnail error:', err);
+                }
+
+                // Upload
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('connectionId', this.connectionId);
+                    // Enviar também um ID para o backend poder referenciar (se suportado)
+                    formData.append('clientConversionId', id);
+
+                    const response = await fetch('/api/conversion/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) throw new Error('Upload failed');
+
+                    conversion.status = 'processing';
+                    this.updateConversionCard(conversion);
+                    this.showToast(`Processing ${file.name}`, 'success');
+                } catch (err) {
+                    conversion.status = 'error';
+                    this.updateConversionCard(conversion);
+                    this.showToast(`Error: ${err.message}`, 'error');
+                }
+
+                this.saveToStorage();
+            }
+
+            // Roteia eventos para a conversão correta baseado no estado e dados disponíveis
+            routeEventToConversion(data, type) {
+                // Estratégia: Se o backend não enviar identificador único por conversão,
+                // assumimos que o evento é para a conversão mais recente em estado 'processing'
+                // ou usamos heurísticas baseadas nos dados recebidos
+
+                let targetConversion = null;
+
+                // Tentar encontrar pela conversão ativa se ela estiver processando
+                if (this.activeConversionId) {
+                    const active = this.conversions.get(this.activeConversionId);
+                    if (active && (active.status === 'processing' || active.status === 'uploading')) {
+                        targetConversion = active;
+                    }
+                }
+
+                // Se não houver ativa processando, procurar qualquer uma processando
+                if (!targetConversion) {
+                    for (const [id, conv] of this.conversions) {
+                        if (conv.status === 'processing' || conv.status === 'uploading') {
+                            targetConversion = conv;
+                            break;
+                        }
+                    }
+                }
+
+                // Se ainda não encontrou, usar a última conversão ativa
+                if (!targetConversion && this.activeConversionId) {
+                    targetConversion = this.conversions.get(this.activeConversionId);
+                }
+
+                // Se não houver nenhuma, ignorar o evento
+                if (!targetConversion) {
+                    console.warn('Received event but no active conversion found:', type, data);
+                    return;
+                }
+
+                // Roteia o evento para o handler específico da conversão identificada
+                switch (type) {
+                    case 'progress':
+                        this.applyProgressUpdate(targetConversion, data);
+                        break;
+                    case 'page':
+                        this.applyPageProgress(targetConversion, data);
+                        break;
+                    case 'image':
+                        this.applyImageProgress(targetConversion, data);
+                        break;
+                    case 'completed':
+                        this.applyConversionCompleted(targetConversion, data);
+                        break;
+                    case 'error':
+                        this.applyConversionError(targetConversion, data);
+                        break;
+                    case 'cancelled':
+                        this.applyConversionCancelled(targetConversion, data);
+                        break;
+                }
+            }
+
+            applyProgressUpdate(conversion, data) {
+                const percentage = data.Percentage || data.percentage || 0;
+                const message = data.Message || data.message || 'Processing...';
+
+                // Atualiza apenas esta conversão específica
+                conversion.progress = percentage;
+                if (percentage === 100) conversion.status = 'completed';
+                else if (percentage > 0 && conversion.status === 'queued') conversion.status = 'processing';
+
+                // Atualiza UI apenas se esta for a conversão ativamente visualizada
+                if (this.activeConversionId === conversion.id) {
+                    this.workspaceStatus.textContent = message;
+                    this.workspaceProgress.textContent = `${percentage}%`;
+                    if (percentage === 100) {
+                        this.downloadBtn.disabled = false;
+                    }
+                }
+
+                // Sempre atualiza o card na lista lateral
+                this.renderConversionCard(conversion);
+                this.saveToStorage();
+            }
+
+            applyPageProgress(conversion, data) {
+                const pageNum = data.PageNumber || data.pageNumber;
+                const status = data.Status || data.status;
+                const totalImages = data.TotalImagesInPage || data.totalImagesInPage || 0;
+                const processedImages = data.ProcessedImagesInPage || data.processedImagesInPage || 0;
+                const message = data.Message || data.message || '';
+
+                if (!pageNum || !conversion.pages[pageNum - 1]) return;
+
+                const page = conversion.pages[pageNum - 1];
+
+                // Atualiza total de imagens
+                if (totalImages > 0 && page.imagesTotal !== totalImages) {
+                    page.imagesTotal = totalImages;
+                    // Inicializa array de imagens se necessário
+                    if (!page.images) page.images = [];
+                }
+
+                if (processedImages > 0) {
+                    page.imagesProcessed = processedImages;
+                }
+
+                page.status = status.toLowerCase();
+
+                if (status === 'Processing' || status === 'processing') {
+                    page.textProgress = 100;
+                    page.imageProgress = page.imagesTotal > 0 ?
+                        Math.round((page.imagesProcessed / page.imagesTotal) * 100) : 0;
+                } else if (status === 'Completed' || status === 'completed') {
+                    page.textProgress = 100;
+                    page.imagesProcessed = page.imagesTotal;
+                    page.imageProgress = 100;
+                }
+
+                if (this.activeConversionId === conversion.id) {
+                    this.updatePageThumbnail(page, pageNum - 1);
+                    this.workspaceStatus.textContent = message || `Processing page ${pageNum}...`;
+
+                    if (this.pageModal.classList.contains('active') && this.currentModalPageIndex === pageNum - 1) {
+                        this.updateModalContent(page);
+                    }
+                }
+
+                this.saveToStorage();
+            }
+            applyImageProgress(conversion, data) {
+                const pageNum = data.PageNumber || data.pageNumber;
+                let imageIndex = data.ImageIndex !== undefined ? data.ImageIndex : data.imageIndex;
+                const status = data.Status || data.status;
+                const message = data.Message || data.message || '';
+
+                if (!pageNum || !conversion.pages[pageNum - 1]) return;
+
+                const page = conversion.pages[pageNum - 1];
+                if (!page.images) page.images = [];
+
+                // Garante que imageIndex é número válido (0-based)
+                if (imageIndex === undefined || imageIndex === null || isNaN(imageIndex)) {
+                    // Se não tem índice, tenta encontrar por nome/status ou usa length
+                    const existing = page.images.find(i => i.status === 'processing' || i.status === 'pending');
+                    if (existing) {
+                        imageIndex = existing.index;
+                    } else {
+                        imageIndex = page.images.length;
+                    }
+                } else {
+                    imageIndex = parseInt(imageIndex, 10);
+                }
+
+                // NORMALIZA STATUS para evitar inconsistências
+                let normalizedStatus = (status || 'pending').toLowerCase();
+                if (normalizedStatus === 'started' || normalizedStatus === 'analyzing') {
+                    normalizedStatus = 'processing';
+                }
+
+                // PROCURA EXISTENTE ou CRIA NOVA - evita duplicatas pelo index
+                const existingIndex = page.images.findIndex(i => i.index === imageIndex);
+
+                if (existingIndex === -1) {
+                    // Cria nova apenas se não existe
+                    page.images.push({
+                        index: imageIndex,
+                        name: message || `Image ${imageIndex + 1}`,
+                        status: normalizedStatus,
+                        type: 'Image'
+                    });
+                } else {
+                    // Atualiza existente - remove o antigo e atualiza
+                    const existing = page.images[existingIndex];
+                    existing.status = normalizedStatus;
+                    if (message && message !== existing.name) {
+                        existing.name = message;
+                    }
+                }
+
+                // Recalcula contagem de processadas
+                const completedCount = page.images.filter(i => i.status === 'completed').length;
+                page.imagesProcessed = completedCount;
+
+                if (page.images.length > page.imagesTotal) {
+                    page.imagesTotal = page.images.length;
+                }
+
+                page.imageProgress = page.imagesTotal > 0 ?
+                    Math.round((page.imagesProcessed / page.imagesTotal) * 100) : 0;
+
+                // Atualiza UI
+                if (this.activeConversionId === conversion.id) {
+                    this.updatePageThumbnail(page, pageNum - 1);
+
+                    if (this.pageModal.classList.contains('active') &&
+                        this.currentModalPageIndex === pageNum - 1) {
+                        this.updateModalContent(page);
+                    }
+                }
+
+                this.saveToStorage();
+            }
+            updateModalContent(page) {
+                const textDetail = document.getElementById('modalTextDetail');
+                const imageDetail = document.getElementById('modalImageDetail');
+                const list = document.getElementById('modalImagesList');
+
+                textDetail.textContent = page.textProgress === 100 ? 'Complete' :
+                    page.status === 'processing' ? 'Extracting...' : 'Waiting';
+
+                if (!page.imagesTotal || page.imagesTotal === 0) {
+                    imageDetail.textContent = 'No images on this page';
+                    list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem;">No images detected</div>';
+                    return;
+                }
+
+                const imgProgress = Math.round((page.imagesProcessed / page.imagesTotal) * 100);
+                imageDetail.textContent = `${page.imagesProcessed} of ${page.imagesTotal} analyzed (${imgProgress}%)`;
+
+                // Remove duplicatas pelo index e ordena
+                const uniqueImages = new Map();
+                if (page.images && page.images.length > 0) {
+                    page.images.forEach(img => {
+                        // Sempre mantém a última versão (sobrescreve se existir)
+                        uniqueImages.set(img.index, img);
+                    });
+                }
+
+                // Converte para array e ordena por índice
+                const sortedImages = Array.from(uniqueImages.values())
+                    .sort((a, b) => a.index - b.index);
+
+                // Preenche gaps se necessário (imagens que ainda não chegaram eventos)
+                const displayImages = [];
+                for (let i = 0; i < page.imagesTotal; i++) {
+                    const existing = sortedImages.find(img => img.index === i);
+                    if (existing) {
+                        displayImages.push(existing);
+                    } else {
+                        displayImages.push({
+                            index: i,
+                            name: `Image ${i + 1}`,
+                            status: 'pending',
+                            type: 'Image'
+                        });
+                    }
+                }
+
+                list.innerHTML = displayImages.map((img) => {
+                    let statusText = '○ Waiting';
+                    let statusClass = 'pending';
+
+                    if (img.status === 'completed') {
+                        statusText = '✓ Done';
+                        statusClass = 'completed';
+                    } else if (img.status === 'processing') {
+                        statusText = '⏳ Processing...';
+                        statusClass = 'processing';
+                    }
+
+                    return `
+                    <div class="processing-item ${statusClass}" data-image-index="${img.index}">
+                        <div>
+                            <div style="font-weight: 500;">${img.name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">${img.type}</div>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">${statusText}</span>
+                    </div>
+                    `;
+                }).join('');
+            }
+            applyConversionCompleted(conversion, data) {
+                const success = data.Success || data.success;
+                if (!success) {
+                    this.applyConversionError(conversion, data);
+                    return;
+                }
+
+                conversion.status = 'completed';
+                conversion.progress = 100;
+                conversion.markdown = data.Markdown || data.markdown;
+                conversion.images = data.Images || data.images || [];
+
+                conversion.pages.forEach(p => {
+                    p.status = 'completed';
+                    p.textProgress = 100;
+                    p.imageProgress = 100;
+                });
+
+                // Atualiza UI se for a conversão ativa
+                if (this.activeConversionId === conversion.id) {
+                    this.renderMarkdown(conversion.markdown);
+                    this.renderImages(conversion.images);
+                    this.downloadBtn.disabled = false;
+                    this.workspaceStatus.textContent = 'Completed';
+                    conversion.pages.forEach((p, idx) => this.updatePageThumbnail(p, idx));
+                }
+
+                this.renderConversionCard(conversion);
+                this.showToast(`${conversion.fileName} completed!`, 'success');
+                this.saveToStorage();
+            }
+
+            applyConversionError(conversion, data) {
+                const error = data.Error || data.error || data.message || 'Unknown error';
+                conversion.status = 'error';
+                conversion.error = error;
+
+                if (this.activeConversionId === conversion.id) {
+                    this.workspaceStatus.textContent = `Error: ${error}`;
+                }
+
+                this.renderConversionCard(conversion);
+                this.showToast(`Error in ${conversion.fileName}: ${error}`, 'error');
+                this.saveToStorage();
+            }
+
+            applyConversionCancelled(conversion, data) {
+                const message = data.Message || data.message || 'Cancelled';
+                conversion.status = 'cancelled';
+
+                if (this.activeConversionId === conversion.id) {
+                    this.workspaceStatus.textContent = message;
+                }
+
+                this.renderConversionCard(conversion);
+                this.saveToStorage();
+            }
+
+            // Métodos de UI permanecem iguais mas garantem isolamento por conversão
+            renderConversionCard(conv) {
+                let card = document.querySelector(`.conversion-card[data-id="${conv.id}"]`);
+
+                if (!card) {
+                    card = document.createElement('div');
+                    card.className = 'conversion-card';
+                    card.dataset.id = conv.id;
+                    this.conversionsList.prepend(card);
+                }
+
+                const isActive = conv.id === this.activeConversionId;
+
+                // Remove todas as classes de status anteriores
+                card.className = 'conversion-card';
+                if (isActive) card.classList.add('active');
+
+                // Adiciona classe de status específica
+                if (conv.status === 'completed') card.classList.add('completed');
+                else if (conv.status === 'error' || conv.status === 'interrupted') card.classList.add('error');
+
+                const statusClass = conv.status === 'completed' ? 'status-completed' :
+                    conv.status === 'error' || conv.status === 'interrupted' ? 'status-error' :
+                        conv.status === 'cancelled' ? 'status-error' :
+                            conv.status === 'processing' ? 'status-processing' : 'status-queued';
+
+                const statusText = conv.status === 'interrupted' ? 'Interrupted' :
+                    conv.status === 'uploading' ? 'Uploading' : conv.status;
+
+                card.innerHTML = `
+                    <div class="conversion-header" onclick="event.stopPropagation(); app.selectConversion('${conv.id}')">
+                        <div class="conversion-title" title="${conv.fileName}">${conv.fileName}</div>
+                        <span class="conversion-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="conversion-progress" onclick="event.stopPropagation(); app.selectConversion('${conv.id}')">
+                        <div class="conversion-progress-bar" style="width: ${conv.progress}%"></div>
+                    </div>
+                    <div class="conversion-actions">
+                        <button class="btn-icon" onclick="event.stopPropagation(); app.selectConversion('${conv.id}')" title="View">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                        <button class="btn-icon delete" onclick="event.stopPropagation(); app.deleteConversion('${conv.id}')" title="Delete">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+            }
+
+            updateConversionCard(conversion) {
+                this.renderConversionCard(conversion);
+            }
+
+            deleteConversion(id) {
+                const conv = this.conversions.get(id);
+                if (!conv) return;
+
+                if (confirm(`Delete conversion "${conv.fileName}"?`)) {
+                    this.conversions.delete(id);
+
+                    if (this.activeConversionId === id) {
+                        this.activeConversionId = null;
+                        this.workspace.classList.remove('active');
+                        this.emptyState.style.display = 'flex';
+                    }
+
+                    const card = document.querySelector(`.conversion-card[data-id="${id}"]`);
+                    if (card) card.remove();
+
+                    this.updateQueueCount();
+                    this.saveToStorage();
+                    this.showToast('Conversion deleted', 'success');
+                }
+            }
+
+            selectConversion(id) {
+                this.activeConversionId = id;
+                const conv = this.conversions.get(id);
+                if (!conv) return;
+
+                document.querySelectorAll('.conversion-card').forEach(c => {
+                    c.classList.remove('active');
+                    c.classList.toggle('active', c.dataset.id === id);
+                });
+
+                this.emptyState.style.display = 'none';
+                this.workspace.classList.add('active');
+                this.workspaceTitle.textContent = conv.fileName;
+                this.workspaceStatus.textContent = conv.status === 'completed' ? 'Completed' :
+                    conv.status === 'error' ? 'Error occurred' :
+                        conv.status === 'interrupted' ? 'Interrupted (refresh to retry)' :
+                            conv.status === 'cancelled' ? 'Cancelled' : 'Processing...';
+                this.workspaceProgress.textContent = `${conv.progress}%`;
+                this.downloadBtn.disabled = conv.status !== 'completed';
+                this.pagesSummary.textContent = `${conv.totalPages || 0} pages`;
+
+                this.pagesGrid.innerHTML = '';
+                if (conv.pages) {
+                    conv.pages.forEach((p, idx) => this.updatePageThumbnail(p, idx));
+                }
+
+                if (conv.markdown) {
+                    this.renderMarkdown(conv.markdown);
+                    this.renderImages(conv.images || []);
+                } else {
+                    this.previewContent.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 4rem;">Processing not completed yet...</div>';
+                    this.rawEditor.value = '';
+                    this.splitRawEditor.value = '';
+                    this.splitPreview.innerHTML = '';
+                    this.imagesGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No images available yet</div>';
+                }
+
+                this.saveToStorage();
+            }
+
+            updatePageThumbnail(page, index) {
+                let thumb = document.getElementById(`page-thumb-${this.activeConversionId}-${index}`);
+
+                if (!thumb) {
+                    thumb = document.createElement('div');
+                    thumb.id = `page-thumb-${this.activeConversionId}-${index}`;
+                    thumb.className = 'page-thumbnail';
+                    thumb.onclick = () => this.openModal(index);
+                    this.pagesGrid.appendChild(thumb);
+                }
+
+                const statusClass = page.status === 'completed' ? 'completed' :
+                    page.status === 'processing' ? 'processing' : 'pending';
+
+                thumb.className = `page-thumbnail ${statusClass}`;
+
+                // CORREÇÃO: Só mostra badge e progresso se imagesTotal > 0
+                const hasImages = page.imagesTotal > 0;
+                const progressPercent = hasImages ?
+                    Math.round((page.imagesProcessed / page.imagesTotal) * 100) : 0;
+
+                thumb.innerHTML = `
+                    ${page.thumbnail ? `<img src="${page.thumbnail}" alt="Page ${page.number}" loading="lazy">` : ''}
+                    <div class="page-info-overlay">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: white; text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Page ${page.number}</span>
+                            ${hasImages ? `
+                                <span class="page-badge">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    </svg>
+                                    ${page.imagesTotal}
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="page-status-bottom">
+                            ${page.status === 'processing' ? `
+                                ${hasImages ? `
+                                    <div class="processing-spinner"></div>
+                                    <div class="page-progress-text">Processing ${page.imagesProcessed}/${page.imagesTotal}...</div>
+                                    <div class="page-mini-progress">
+                                        <div class="page-mini-progress-bar" style="width: ${progressPercent}%"></div>
+                                    </div>
+                                ` : `
+                                    <div class="processing-spinner"></div>
+                                    <div class="page-progress-text">Processing...</div>
+                                `}
+                            ` : page.status === 'completed' ? `
+                                <div class="page-progress-text" style="color: var(--accent-success);">
+                                    ${hasImages ? `✓ ${page.imagesTotal} images` : '✓ Complete'}
+                                </div>
+                            ` : `
+                                <div class="page-progress-text">Waiting</div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }
+            openModal(pageIndex) {
+                const conv = this.conversions.get(this.activeConversionId);
+                if (!conv || !conv.pages[pageIndex]) return;
+
+                this.currentModalPageIndex = pageIndex;
+                this.updateModal();
+                this.pageModal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+
+            updateModal() {
+                const conv = this.conversions.get(this.activeConversionId);
+                if (!conv) return;
+
+                const page = conv.pages[this.currentModalPageIndex];
+                if (!page) return;
+
+                this.modalImage.src = page.thumbnail || '';
+                this.modalTitle.textContent = `Page ${page.number}`;
+                this.modalIndicator.textContent = `Page ${this.currentModalPageIndex + 1} of ${conv.totalPages}`;
+
+                this.modalPrev.disabled = this.currentModalPageIndex === 0;
+                this.modalNext.disabled = this.currentModalPageIndex >= conv.totalPages - 1;
+
+                this.updateModalContent(page);
+            }
+
+            navigateModal(direction) {
+                const conv = this.conversions.get(this.activeConversionId);
+                if (!conv) return;
+
+                const newIndex = this.currentModalPageIndex + direction;
+                if (newIndex >= 0 && newIndex < conv.totalPages) {
+                    this.currentModalPageIndex = newIndex;
+                    this.updateModal();
+                }
+            }
+
+            closeModal() {
+                this.pageModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            updateModalContent(page) {
+                const textDetail = document.getElementById('modalTextDetail');
+                const imageDetail = document.getElementById('modalImageDetail');
+                const list = document.getElementById('modalImagesList');
+
+                if (!page.images || page.images.length === 0) {
+                    textDetail.textContent = page.textProgress === 100 ? 'Complete' :
+                        page.textProgress > 0 ? 'In progress...' : 'Waiting';
+                    imageDetail.textContent = 'No images on this page';
+                    list.innerHTML = '<div style="color: var(--text-muted); text-align: center; padding: 2rem; font-style: italic;">No images available on this page</div>';
+                    return;
+                }
+
+                textDetail.textContent = page.textProgress === 100 ? 'Complete' : 'Extracting...';
+
+                const imgProgress = page.imagesTotal > 0 ?
+                    Math.round((page.imagesProcessed / page.imagesTotal) * 100) : 0;
+                imageDetail.textContent = `${page.imagesProcessed} of ${page.imagesTotal} analyzed (${imgProgress}%)`;
+
+                list.innerHTML = page.images.map(img => `
+                        <div class="processing-item ${img.status}">
+                            <div>
+                                <div style="font-weight: 500;">${img.name || `Image ${img.index + 1}`}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">${img.type || 'Image'}</div>
+                            </div>
+                            <span style="font-size: 0.75rem; text-transform: capitalize; color: var(--text-secondary);">
+                                ${img.status === 'completed' ? '✓ Done' : img.status === 'processing' ? '⏳ Processing...' : '○ Waiting'}
+                            </span>
+                        </div>
+                    `).join('');
+            }
+
+            renderMarkdown(markdown) {
+                this.rawEditor.value = markdown || '';
+                this.splitRawEditor.value = markdown || '';
+                const html = marked.parse(markdown || '');
+                this.previewContent.innerHTML = html;
+                this.splitPreview.innerHTML = html;
+
+                // Syntax highlighting for code blocks
+                this.previewContent.querySelectorAll('pre code').forEach(block => {
+                    Prism.highlightElement(block);
+                });
+                this.splitPreview.querySelectorAll('pre code').forEach(block => {
+                    Prism.highlightElement(block);
+                });
+            }
+
+            renderImages(images) {
+                this.imagesGrid.innerHTML = '';
+                if (!images || images.length === 0) {
+                    this.imagesGrid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: var(--text-muted);">No images found</div>';
+                    return;
+                }
+
+                images.forEach(img => {
+                    const isDecorative = img.IsDecorative || img.isDecorative;
+                    const contentType = img.ContentType || img.contentType || 'Image';
+                    const badgeClass = isDecorative ? 'badge-decorative' :
+                        contentType === 'Code' ? 'badge-code' :
+                            contentType === 'Chart' ? 'badge-chart' : '';
+
+                    const card = document.createElement('div');
+                    card.className = 'image-analysis-card';
+                    card.dataset.type = isDecorative ? 'decorative' : 'content';
+
+                    const base64 = img.Base64 || img.base64;
+                    const mimeType = img.MimeType || img.mimeType || 'image/png';
+                    const pageNum = img.PageNumber || img.pageNumber || '?';
+                    const desc = img.Description || img.description || 'No description';
+
+                    card.innerHTML = `
+                            <div class="image-preview-container">
+                                ${base64 ? `<img src="data:${mimeType};base64,${base64}" alt="">` : '<div style="color: var(--text-muted);">No preview</div>'}
+                                <span class="image-type-badge ${badgeClass}">${contentType}</span>
+                            </div>
+                            <div style="padding: 1rem;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem;">Page ${pageNum}</div>
+                                <div style="font-size: 0.875rem; color: var(--text-secondary);">${desc}</div>
+                            </div>
+                        `;
+                    this.imagesGrid.appendChild(card);
+                });
+            }
+
+            filterImages(type) {
+                document.querySelectorAll('.filter-tab').forEach(t => {
+                    t.classList.toggle('active', t.dataset.filter === type);
+                });
+                document.querySelectorAll('.image-analysis-card').forEach(c => {
+                    c.style.display = (type === 'all' || c.dataset.type === type) ? 'block' : 'none';
+                });
+            }
+
+            switchTab(tab) {
+                document.querySelectorAll('.editor-tab').forEach(t => {
+                    t.classList.toggle('active', t.dataset.tab === tab);
+                });
+                document.querySelectorAll('.editor-panel').forEach(p => {
+                    p.classList.toggle('active', p.id === `panel-${tab}`);
+                });
+            }
+
+            downloadActive() {
+                const conv = this.conversions.get(this.activeConversionId);
+                if (!conv || !conv.markdown) return;
+
+                const blob = new Blob([conv.markdown], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = conv.fileName.replace('.pdf', '.md');
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                this.showToast('Download started', 'success');
+            }
+
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                const icons = { success: '✓', error: '✕', warning: '⚠', info: 'ℹ' };
+                toast.innerHTML = `<span style="font-size: 1.25rem;">${icons[type]}</span><span>${message}</span>`;
+                container.appendChild(toast);
+                setTimeout(() => toast.remove(), 4000);
+            }
+
+            updateQueueCount() {
+                this.queueCount.textContent = this.conversions.size;
+            }
+        }
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            window.app = new CosmosConverter();
+        });
+    </script>
+</body>
+</html>
