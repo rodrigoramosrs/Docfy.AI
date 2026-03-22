@@ -5,7 +5,8 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
-	</PropertyGroup>
+	<Version>1.0.1</Version>
+  </PropertyGroup>
 
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" Version="8.0.1">
