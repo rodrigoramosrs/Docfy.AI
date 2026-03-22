@@ -319,6 +319,11 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
+      - name: 📦 Restore
+        run: |
+          dotnet restore src/Docfy.Core/Docfy.Core.csproj
+          dotnet restore src/Docfy/Docfy.csproj
+
       - name: 🔨 Publish Self-Contained
         shell: bash
         run: |
