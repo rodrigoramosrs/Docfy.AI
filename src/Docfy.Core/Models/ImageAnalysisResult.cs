@@ -1,4 +1,4 @@
-namespace Docfy.Models;
+namespace Docfy.Core.Models;
 
 public class ImageAnalysisResult
 {

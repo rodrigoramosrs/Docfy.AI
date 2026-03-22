@@ -1,6 +1,6 @@
-using Docfy.Models;
+using Docfy.Core.Models;
 
-namespace Docfy.Services;
+namespace Docfy.Core.Services;
 
 public interface IPdfExtractionService
 {

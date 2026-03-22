@@ -4,20 +4,11 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>df8b3b4d-81d7-488b-b86a-055d127e4e8f</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- SignalR -->
-    
-    <!-- PDF Extraction - iText7 (moderno) -->
-    <PackageReference Include="itext7" Version="9.5.0" />
-    <PackageReference Include="itext7.bouncy-castle-adapter" Version="9.5.0" />
-    
-    <!-- HTTP Client para LLM -->
-    
-    <!-- Markdown Processing (opcional, para validação) -->
-    <PackageReference Include="Markdig" Version="1.1.1" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <ProjectReference Include="..\Docfy.Core\Docfy.Core.csproj" />
   </ItemGroup>
 
 </Project>

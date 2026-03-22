@@ -1,8 +1,9 @@
 using System.Text;
 using System.Text.RegularExpressions;
-using Docfy.Models;
+using Docfy.Core.Models;
+using Microsoft.Extensions.Logging;
 
-namespace Docfy.Services;
+namespace Docfy.Core.Services;
 
 public class MarkdownBuilderService
 {
@@ -52,6 +53,13 @@ public class MarkdownBuilderService
                     _logger.LogDebug("Ignorando imagem decorativa/duplicada na página {Page}", page.PageNumber);
                     continue;
                 }
+                
+                // Ignorar imagens sem descrição
+                if (string.IsNullOrEmpty(analysis.Description))
+                {
+                    _logger.LogDebug("Ignorando imagem sem descrição na página {Page}", page.PageNumber);
+                    continue;
+                }
 
                 // Estimar posição aproximada da imagem no texto baseado em Y
                 // (simplificação: assumir distribuição uniforme)
@@ -66,10 +74,8 @@ public class MarkdownBuilderService
                 }
 
                 // Inserir representação da imagem
-                var imageRepresentation = FormatImageRepresentation(analysis);
-                finalContent.AppendLine();
-                finalContent.AppendLine(imageRepresentation);
-                finalContent.AppendLine();
+var imageRepresentation = FormatImageRepresentation(analysis);
+            finalContent.Append(imageRepresentation);
             }
 
             // Adicionar linhas restantes
@@ -80,18 +86,13 @@ public class MarkdownBuilderService
             }
 
             markdown.Append(finalContent);
-            
-            // Separador entre páginas (opcional)
-            if (page.PageNumber < pages.Count)
-            {
-                markdown.AppendLine();
-                markdown.AppendLine("---");
-                markdown.AppendLine();
-            }
+            markdown.AppendLine("---");
+            markdown.AppendLine();
         }
 
         // Pós-processamento
-        var finalMarkdown = PostProcess(markdown.ToString());
+        var beforeProcess = markdown.ToString();
+        var finalMarkdown = PostProcess(beforeProcess);
         
         return finalMarkdown;
     }
@@ -189,27 +190,30 @@ public class MarkdownBuilderService
             case "Text":
                 // Texto extraído da imagem - inserir como citação ou bloco
                 sb.AppendLine("> **Conteúdo de imagem:**");
-                sb.AppendLine();
                 sb.AppendLine(analysis.Description);
+                sb.AppendLine();
                 break;
 
             case "Chart":
             case "Diagram":
                 // Descrição de gráfico/diagrama
                 sb.AppendLine("> **Figura:** " + analysis.Description);
+                sb.AppendLine();
                 break;
 
             case "Code":
                 // Código em bloco com syntax highlighting
-                var lang = analysis.CodeLanguage?.ToLower() ?? "text";
+                var lang = analysis.CodeLanguage?.ToLowerInvariant() ?? "text";
                 sb.AppendLine($"```{lang}");
                 sb.AppendLine(analysis.Description);
                 sb.AppendLine("```");
+                sb.AppendLine();
                 break;
 
             case "UI":
                 // Descrição de interface
                 sb.AppendLine("> **Interface:** " + analysis.Description);
+                sb.AppendLine();
                 break;
 
             default:
@@ -217,6 +221,7 @@ public class MarkdownBuilderService
                 if (!string.IsNullOrWhiteSpace(analysis.Description))
                 {
                     sb.AppendLine("> " + analysis.Description);
+                    sb.AppendLine();
                 }
                 break;
         }
@@ -229,17 +234,20 @@ public class MarkdownBuilderService
     /// </summary>
     private string PostProcess(string markdown)
     {
-        // Remover linhas em branco excessivas
-        markdown = Regex.Replace(markdown, @"\n{3,}", "\n\n");
+        // Remover linhas em branco excessivas (mantenha pelo menos 2 linhas em branco entre seções)
+        markdown = Regex.Replace(markdown, @"\n{4,}", "\n\n");
         
         // Normalizar headings (garantir espaço após #)
         markdown = Regex.Replace(markdown, @"^(#{1,6})([^\s])", "$1 $2", RegexOptions.Multiline);
         
-        // Corrigir listas mal formatadas
-        markdown = Regex.Replace(markdown, @"^\s*[-\*]\s*", "- ", RegexOptions.Multiline);
+        // Corrigir listas mal formatadas (não afetar separadores de página)
+        markdown = Regex.Replace(markdown, @"^(?!\s*---\s*$)\s*[-\*]\s*", "- ", RegexOptions.Multiline);
         
         // Garantir que blocos de código estejam bem formados
         markdown = FixCodeBlocks(markdown);
+        
+        // Remove linhas em branco duplicadas antes de blocos de código
+        markdown = Regex.Replace(markdown, @"\n{2,}(\s*```)", "\n\n$1", RegexOptions.Multiline);
 
         return markdown.Trim();
     }
@@ -289,7 +297,7 @@ public class MarkdownBuilderService
     /// <summary>
     /// Validação básica do Markdown gerado
     /// </summary>
-    public object ValidateMarkdown(string markdown)
+    public MarkdownValidationResult ValidateMarkdown(string markdown)
     {
         var issues = new List<string>();
         
@@ -297,17 +305,17 @@ public class MarkdownBuilderService
         var codeBlockMatches = Regex.Matches(markdown, "```");
         if (codeBlockMatches.Count % 2 != 0)
         {
-            issues.Add("Bloco de código não fechado detectado");
+            issues.Add("Bloco de código não fechado");
         }
 
-        // Verificar headings vazios
+        // Verificar headings vazios (apenas # sem texto após)
         if (Regex.IsMatch(markdown, @"^#{1,6}\s*$", RegexOptions.Multiline))
         {
-            issues.Add("Heading vazio detectado");
+            issues.Add("Heading vazio");
         }
 
         // Estatísticas
-        var stats = new
+        var stats = new MarkdownValidationResult
         {
             TotalCharacters = markdown.Length,
             TotalLines = markdown.Split('\n').Length,

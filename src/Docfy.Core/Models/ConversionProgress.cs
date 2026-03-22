@@ -1,4 +1,4 @@
-namespace Docfy.Models;
+namespace Docfy.Core.Models;
 
 /// <summary>
 /// Atualização de progresso enviada via SignalR

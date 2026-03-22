@@ -1,4 +1,4 @@
-using Docfy.Models;
+using Docfy.Core.Models;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats.Bmp;
 using SixLabors.ImageSharp.Formats.Gif;
@@ -11,8 +11,11 @@ using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Http;
 
-namespace Docfy.Services;
+namespace Docfy.Core.Services;
 
 public class LlmVisionService : ILlmVisionService
 {
@@ -25,17 +28,24 @@ public class LlmVisionService : ILlmVisionService
         IConfiguration configuration,
         ILogger<LlmVisionService> logger)
     {
-        _httpClient = httpClientFactory.CreateClient("LlmClient");
-        _configuration = configuration;
-        _logger = logger;
+        _httpClient = httpClientFactory?.CreateClient("LlmClient") ?? throw new ArgumentNullException(nameof(httpClientFactory));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-        var apiKey = _configuration["LlmVision:ApiKey"] ??
+        var apiKey = _configuration["LlmVision:ApiKey"];
+        if (string.IsNullOrEmpty(apiKey))
             throw new InvalidOperationException("LlmVision:ApiKey não configurada");
 
         _httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
-        int.TryParse(_configuration["LlmVision:RequestTimeoutSeconds"], out int requestTimeoutSeconds);
-
-        _httpClient.Timeout = TimeSpan.FromSeconds(requestTimeoutSeconds);
+        
+        if (int.TryParse(_configuration["LlmVision:RequestTimeoutSeconds"], out int requestTimeoutSeconds) && requestTimeoutSeconds > 0)
+        {
+            _httpClient.Timeout = TimeSpan.FromSeconds(requestTimeoutSeconds);
+        }
+        else
+        {
+            _httpClient.Timeout = TimeSpan.FromMinutes(5);
+        }
     }
 
     public async Task<ImageAnalysisResult> AnalyzeImageAsync(ExtractedImage image)
@@ -202,11 +212,12 @@ public class LlmVisionService : ILlmVisionService
         {
             PageNumber = image.PageNumber,
             ImageIndex = image.ImageIndex,
-            ImageBase64 = Convert.ToBase64String(image.Data),
+            ImageBase64 = $"data:{image.MimeType};base64,{Convert.ToBase64String(image.Data)}",
             MimeType = image.MimeType,
             Width = (int)image.Width,
             Height = (int)image.Height,
             Size = image.Data.Length,
+            ImageHash = CalculateHash(image.Data),
             Description = $"[Erro ao processar imagem após {attempt} tentativas de redimensionamento. " +
                          $"Última escala tentada: {(int)(currentScale * 100)}% ({finalWidth}x{finalHeight}px)]",
             ContentType = "Error",
@@ -370,6 +381,12 @@ public class LlmVisionService : ILlmVisionService
         return truncated;
     }
 
+    private byte[] CalculateHash(byte[] data)
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        return sha256.ComputeHash(data);
+    }
+
     private string BuildAnalysisPrompt()
     {
         return @"Analise esta imagem extraída de um documento PDF e classifique-a seguindo estas regras:
@@ -412,12 +429,12 @@ Responda APENAS no formato especificado acima, sem explicações adicionais.";
             {
                 PageNumber = image.PageNumber,
                 ImageIndex = image.ImageIndex,
-                ImageBase64 = base64Image,
+                ImageBase64 = $"data:{image.MimeType};base64,{base64Image}",
                 MimeType = image.MimeType,
                 Width = (int)image.Width,
                 Height = (int)image.Height,
                 Size = image.Data.Length,
-                ImageHash = image.Hash
+                ImageHash = CalculateHash(image.Data)
             };
 
             if (content.StartsWith("DECORATIVE", StringComparison.OrdinalIgnoreCase))
@@ -480,11 +497,12 @@ Responda APENAS no formato especificado acima, sem explicações adicionais.";
             {
                 PageNumber = image.PageNumber,
                 ImageIndex = image.ImageIndex,
-                ImageBase64 = base64Image,
+                ImageBase64 = $"data:{image.MimeType};base64,{base64Image}",
                 MimeType = image.MimeType,
                 Width = (int)image.Width,
                 Height = (int)image.Height,
                 Size = image.Data.Length,
+                ImageHash = CalculateHash(image.Data),
                 Description = content,
                 ContentType = "Raw",
                 Confidence = 0

@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Docfy.DTOs;
 using Docfy.Hubs;
-using Docfy.Models;
-using Docfy.Services;
+using Docfy.Core.Models;
+using Docfy.Core.Services;
 using System.Collections.Concurrent;
 
 namespace Docfy.Controllers;

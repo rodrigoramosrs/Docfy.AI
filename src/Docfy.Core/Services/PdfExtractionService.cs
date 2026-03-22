@@ -3,9 +3,10 @@ using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Pdf.Xobject;
 using iText.IO.Image;
-using Docfy.Models;
+using Docfy.Core.Models;
+using Microsoft.Extensions.Logging;
 
-namespace Docfy.Services;
+namespace Docfy.Core.Services;
 
 public class PdfExtractionService : IPdfExtractionService
 {
@@ -22,32 +23,45 @@ public class PdfExtractionService : IPdfExtractionService
         {
             var pages = new List<ExtractedPage>();
 
-            using var stream = new MemoryStream(pdfBytes);
-            using var pdfDoc = new PdfDocument(new PdfReader(stream));
-
-            int numberOfPages = pdfDoc.GetNumberOfPages();
-            _logger.LogInformation("Processando PDF com {Pages} páginas", numberOfPages);
-
-            for (int i = 1; i <= numberOfPages; i++)
+            if (pdfBytes == null || pdfBytes.Length == 0)
             {
-                var page = pdfDoc.GetPage(i);
-                var extractedPage = new ExtractedPage
+                _logger.LogWarning("PDF bytes é null ou vazio");
+                return pages;
+            }
+
+            try
+            {
+                using var stream = new MemoryStream(pdfBytes);
+                using var pdfDoc = new PdfDocument(new PdfReader(stream));
+
+                int numberOfPages = pdfDoc.GetNumberOfPages();
+                _logger.LogInformation("Processando PDF com {Pages} páginas", numberOfPages);
+
+                for (int i = 1; i <= numberOfPages; i++)
                 {
-                    PageNumber = i
-                };
+                    var page = pdfDoc.GetPage(i);
+                    var extractedPage = new ExtractedPage
+                    {
+                        PageNumber = i
+                    };
 
-                var textChunks = ExtractTextWithPosition(page);
-                extractedPage.TextChunks = textChunks;
-                extractedPage.Text = string.Join(" ", textChunks.Select(t => t.Text));
+                    var textChunks = ExtractTextWithPosition(page);
+                    extractedPage.TextChunks = textChunks;
+                    extractedPage.Text = string.Join(" ", textChunks.Select(t => t.Text));
 
-                extractedPage.Images = ExtractImagesSafe(page, i);
+                    extractedPage.Images = ExtractImagesSafe(page, i);
 
-                foreach (var img in extractedPage.Images)
-                {
-                    img.Hash = CalculateHash(img.Data);
+                    foreach (var img in extractedPage.Images)
+                    {
+                        img.Hash = CalculateHash(img.Data);
+                    }
+
+                    pages.Add(extractedPage);
                 }
-
-                pages.Add(extractedPage);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro ao processar PDF");
             }
 
             return pages;

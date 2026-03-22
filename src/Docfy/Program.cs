@@ -1,5 +1,5 @@
 using Docfy.Hubs;
-using Docfy.Services;
+using Docfy.Core.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

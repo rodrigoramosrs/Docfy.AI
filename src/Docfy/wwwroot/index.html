@@ -2241,7 +2241,7 @@
 
                     card.innerHTML = `
                             <div class="image-preview-container">
-                                ${base64 ? `<img src="data:${mimeType};base64,${base64}" alt="">` : '<div style="color: var(--text-muted);">No preview</div>'}
+                                ${base64 ? `<img src="${base64}" alt="">` : '<div style="color: var(--text-muted);">No preview</div>'}
                                 <span class="image-type-badge ${badgeClass}">${contentType}</span>
                             </div>
                             <div style="padding: 1rem;">
