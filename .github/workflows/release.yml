@@ -150,7 +150,9 @@ jobs:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: 📦 Restore
-        run: dotnet restore src/Docfy.Core/Docfy.Core.csproj
+        run: |
+          dotnet restore src/Docfy.Core/Docfy.Core.csproj
+          dotnet restore src/Docfy/Docfy.csproj
 
       - name: 🔨 Build Core
         run: dotnet build src/Docfy.Core/Docfy.Core.csproj --configuration Release --no-restore
@@ -216,6 +218,11 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: 📦 Restore
+        run: |
+          dotnet restore src/Docfy.Core/Docfy.Core.csproj
+          dotnet restore src/Docfy/Docfy.csproj
 
       - name: 🔨 Publish Framework-Dependent
         shell: bash
