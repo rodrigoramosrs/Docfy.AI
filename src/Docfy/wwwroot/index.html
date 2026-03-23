@@ -126,6 +126,184 @@
             font-size: 0.875rem;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .settings-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .settings-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+            border-color: var(--accent-primary);
+        }
+
+
+        .settings-modal-body {
+            padding: 1.5rem;
+        }
+
+        .settings-group {
+            margin-bottom: 1rem;
+        }
+
+        .settings-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .settings-label:hover {
+            background: var(--bg-hover);
+        }
+
+        .settings-label-info h4 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .settings-label-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 26px;
+            background: var(--bg-primary);
+            border-radius: 13px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .toggle-switch.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .toggle-switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.3s;
+        }
+
+        .toggle-switch.active::after {
+            transform: translateX(22px);
+        }
+
+        .settings-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            cursor: pointer;
+        }
+
+        .settings-select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .settings-modal-footer {
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+
+        .settings-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .settings-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .settings-section-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-primary);
+            margin-bottom: 1rem;
+        }
+
+        .settings-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .settings-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .settings-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .settings-row {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .settings-modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            width: 100%;
+            max-width: 550px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
             .connection-badge.connected {
                 border-color: var(--accent-success);
                 background: rgba(16, 185, 129, 0.1);
@@ -1112,6 +1290,14 @@
             <span class="pulse-dot"></span>
             <span id="connectionText">Connecting...</span>
         </div>
+        <div class="header-actions">
+            <button class="settings-btn" id="settingsBtn" title="Settings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"></path>
+                </svg>
+            </button>
+        </div>
     </header>
 
     <div class="app-container">
@@ -1284,6 +1470,153 @@
 
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="settings-modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="modal-close" onclick="app.closeSettingsModal()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="settings-modal-body">
+                <!-- Conversion Settings -->
+                <div class="settings-section">
+                    <h4 class="settings-section-title">Conversion</h4>
+                    
+                    <div class="settings-group">
+                        <div class="settings-label" onclick="app.toggleSetting('processMarkdownWithLlm')">
+                            <div class="settings-label-info">
+                                <h4>Process Markdown with LLM</h4>
+                                <p>Format and correct markdown using AI</p>
+                            </div>
+                            <div class="toggle-switch" id="toggleProcessMarkdownWithLlm"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <div class="settings-label" onclick="app.toggleSetting('extractImages')">
+                            <div class="settings-label-info">
+                                <h4>Extract Images</h4>
+                                <p>Analyze and describe images in documents</p>
+                            </div>
+                            <div class="toggle-switch active" id="toggleExtractImages"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <div class="settings-label" onclick="app.toggleSetting('preserveFormatting')">
+                            <div class="settings-label-info">
+                                <h4>Preserve Original Formatting</h4>
+                                <p>Keep original document structure</p>
+                            </div>
+                            <div class="toggle-switch active" id="togglePreserveFormatting"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                            <h4>Parallel Processing</h4>
+                            <p>Number of images to process simultaneously</p>
+                        </div>
+                        <select class="settings-select" id="maxParallelSelect">
+                            <option value="1">1 (Sequential)</option>
+                            <option value="2" selected>2 (Recommended)</option>
+                            <option value="4">4 (Fast)</option>
+                            <option value="6">6 (Maximum)</option>
+                            <option value="10">10 (Extreme)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- LLM Configuration -->
+                <div class="settings-section">
+                    <h4 class="settings-section-title">LLM Configuration</h4>
+                    
+                    <div class="settings-group">
+                        <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                            <h4>Provider</h4>
+                            <p>LLM provider to use</p>
+                        </div>
+                        <select class="settings-select" id="llmProvider">
+                            <option value="OpenAI">OpenAI</option>
+                            <option value="LocalAI">LocalAI</option>
+                            <option value="Ollama">Ollama</option>
+                            <option value="LMStudio">LM Studio</option>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                            <h4>Model</h4>
+                            <p>Model name to use</p>
+                        </div>
+                        <input type="text" class="settings-input" id="llmModel" placeholder="gpt-4-vision-preview">
+                    </div>
+                    
+                    <div class="settings-group">
+                        <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                            <h4>Endpoint URL</h4>
+                            <p>API endpoint for the LLM</p>
+                        </div>
+                        <input type="text" class="settings-input" id="llmEndpoint" placeholder="http://127.0.0.1:1234/v1/chat/completions">
+                    </div>
+                    
+                    <div class="settings-group">
+                        <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                            <h4>API Key</h4>
+                            <p>Your API key (if required)</p>
+                        </div>
+                        <input type="password" class="settings-input" id="llmApiKey" placeholder="sk-...">
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="settings-group" style="flex: 1;">
+                            <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                                <h4>Max Tokens</h4>
+                                <p>Maximum response tokens</p>
+                            </div>
+                            <input type="number" class="settings-input" id="llmMaxTokens" placeholder="4096" min="1" max="128000">
+                        </div>
+                        
+                        <div class="settings-group" style="flex: 1;">
+                            <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                                <h4>Context Size</h4>
+                                <p>Model context window</p>
+                            </div>
+                            <input type="number" class="settings-input" id="llmContextSize" placeholder="8192" min="1" max="256000">
+                        </div>
+                    </div>
+                    
+                    <div class="settings-row">
+                        <div class="settings-group" style="flex: 1;">
+                            <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                                <h4>Timeout (seconds)</h4>
+                                <p>Request timeout</p>
+                            </div>
+                            <input type="number" class="settings-input" id="llmTimeout" placeholder="300" min="10" max="3600">
+                        </div>
+                        
+                        <div class="settings-group" style="flex: 1;">
+                            <div class="settings-label-info" style="margin-bottom: 0.5rem;">
+                                <h4>Parallel Requests</h4>
+                                <p>Max concurrent requests</p>
+                            </div>
+                            <input type="number" class="settings-input" id="llmMaxParallel" placeholder="5" min="1" max="20">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-modal-footer">
+                <button class="btn btn-secondary" onclick="app.closeSettingsModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="app.saveSettings()">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
@@ -1344,6 +1677,10 @@
                 this.modalIndicator = document.getElementById('modalIndicator');
                 this.modalPrev = document.getElementById('modalPrev');
                 this.modalNext = document.getElementById('modalNext');
+                
+                // Settings elements
+                this.settingsBtn = document.getElementById('settingsBtn');
+                this.settingsModal = document.getElementById('settingsModal');
             }
 
             saveToStorage() {
@@ -1457,6 +1794,86 @@
                 }
             }
 
+            async openSettingsModal() {
+                try {
+                    const response = await fetch('/api/settings');
+                    const settings = await response.json();
+                    
+                    // Conversion settings
+                    document.getElementById('toggleProcessMarkdownWithLlm').classList.toggle('active', settings.processMarkdownWithLlm);
+                    document.getElementById('toggleExtractImages').classList.toggle('active', settings.extractImages);
+                    document.getElementById('togglePreserveFormatting').classList.toggle('active', settings.preserveOriginalFormatting);
+                    document.getElementById('maxParallelSelect').value = settings.maxParallelImageProcessing;
+                    
+                    // LLM settings
+                    if (settings.llmVision) {
+                        document.getElementById('llmProvider').value = settings.llmVision.provider || 'OpenAI';
+                        document.getElementById('llmModel').value = settings.llmVision.model || '';
+                        document.getElementById('llmEndpoint').value = settings.llmVision.endpoint || '';
+                        document.getElementById('llmApiKey').value = settings.llmVision.apiKey || '';
+                        document.getElementById('llmMaxTokens').value = settings.llmVision.maxTokens || 4096;
+                        document.getElementById('llmContextSize').value = settings.llmVision.contextSize || 8192;
+                        document.getElementById('llmTimeout').value = settings.llmVision.requestTimeoutSeconds || 300;
+                        document.getElementById('llmMaxParallel').value = settings.llmVision.maxParallelImageProcessing || 5;
+                    }
+                    
+                    this.settingsModal.classList.add('active');
+                } catch (e) {
+                    console.error('Failed to load settings:', e);
+                    this.settingsModal.classList.add('active');
+                }
+            }
+
+            closeSettingsModal() {
+                this.settingsModal.classList.remove('active');
+            }
+
+            toggleSetting(setting) {
+                const toggle = document.getElementById('toggle' + setting.charAt(0).toUpperCase() + setting.slice(1));
+                toggle.classList.toggle('active');
+            }
+
+            async saveSettings() {
+                try {
+                    const settings = {
+                        processMarkdownWithLlm: document.getElementById('toggleProcessMarkdownWithLlm').classList.contains('active'),
+                        extractImages: document.getElementById('toggleExtractImages').classList.contains('active'),
+                        preserveOriginalFormatting: document.getElementById('togglePreserveFormatting').classList.contains('active'),
+                        maxParallelImageProcessing: parseInt(document.getElementById('maxParallelSelect').value),
+                        defaultOutputFormat: 'markdown',
+                        supportedFormats: ['.pdf', '.docx'],
+                        llmVision: {
+                            provider: document.getElementById('llmProvider').value,
+                            model: document.getElementById('llmModel').value,
+                            endpoint: document.getElementById('llmEndpoint').value,
+                            apiKey: document.getElementById('llmApiKey').value,
+                            maxTokens: parseInt(document.getElementById('llmMaxTokens').value) || 4096,
+                            contextSize: parseInt(document.getElementById('llmContextSize').value) || 8192,
+                            requestTimeoutSeconds: parseInt(document.getElementById('llmTimeout').value) || 300,
+                            maxParallelImageProcessing: parseInt(document.getElementById('llmMaxParallel').value) || 5
+                        }
+                    };
+
+                    const response = await fetch('/api/settings', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(settings)
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.showToast('Settings saved', 'success');
+                        this.closeSettingsModal();
+                    } else {
+                        this.showToast('Error: ' + result.error, 'error');
+                    }
+                } catch (e) {
+                    console.error('Failed to save settings:', e);
+                    this.showToast('Failed to save settings', 'error');
+                }
+            }
+
             async initSignalR() {
                 this.connection = new signalR.HubConnectionBuilder()
                     .withUrl('/conversionHub')
@@ -1513,6 +1930,7 @@
 
                 this.downloadBtn.addEventListener('click', () => this.downloadActive());
                 document.getElementById('resetStorageBtn').addEventListener('click', () => this.clearStorage());
+                this.settingsBtn.addEventListener('click', () => this.openSettingsModal());
             }
 
             async handleFiles(files) {

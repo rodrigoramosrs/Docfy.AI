@@ -509,4 +509,55 @@ Responda APENAS no formato especificado acima, sem explicações adicionais.";
             };
         }
     }
+
+    public async Task<string> AnalyzeTextAsync(string prompt)
+    {
+        try
+        {
+            var requestBody = new
+            {
+                model = _configuration["LlmVision:Model"] ?? "gpt-4o",
+                messages = new[]
+                {
+                    new
+                    {
+                        role = "user",
+                        content = prompt
+                    }
+                },
+                max_tokens = int.Parse(_configuration["LlmVision:MaxTokens"] ?? "4096"),
+                temperature = 0.3
+            };
+
+            var json = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var endpoint = _configuration["LlmVision:Endpoint"] ??
+                "https://api.openai.com/v1/chat/completions";
+
+            var response = await _httpClient.PostAsync(endpoint, content);
+            var responseJson = await response.Content.ReadAsStringAsync();
+
+            if (response.IsSuccessStatusCode)
+            {
+                using var doc = JsonDocument.Parse(responseJson);
+                var result = doc.RootElement
+                    .GetProperty("choices")[0]
+                    .GetProperty("message")
+                    .GetProperty("content")
+                    .GetString();
+
+                return result ?? prompt;
+            }
+
+            _logger.LogError("Erro na API LLM para análise de texto: {StatusCode} - {Response}",
+                response.StatusCode, responseJson);
+            return prompt;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao analisar texto com LLM");
+            return prompt;
+        }
+    }
 }

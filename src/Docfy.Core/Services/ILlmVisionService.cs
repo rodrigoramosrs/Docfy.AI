@@ -5,4 +5,5 @@ namespace Docfy.Core.Services;
 public interface ILlmVisionService
 {
     Task<ImageAnalysisResult> AnalyzeImageAsync(ExtractedImage image);
+    Task<string> AnalyzeTextAsync(string prompt);
 }

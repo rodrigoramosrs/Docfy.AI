@@ -14,24 +14,32 @@ namespace Docfy.Controllers;
 public class ConversionController : ControllerBase
 {
     private readonly IHubContext<ConversionHub> _hubContext;
-    private readonly IPdfExtractionService _pdfService;
+    private readonly IDocumentExtractionFactory _extractionFactory;
     private readonly ILlmVisionService _llmService;
     private readonly MarkdownBuilderService _markdownBuilder;
+    private readonly ISettingsService _settingsService;
     private readonly ILogger<ConversionController> _logger;
     private readonly int _maxParallelProcessing;
 
+    private static readonly HashSet<string> SupportedFormats = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".pdf", ".docx"
+    };
+
     public ConversionController(
         IHubContext<ConversionHub> hubContext,
-        IPdfExtractionService pdfService,
+        IDocumentExtractionFactory extractionFactory,
         ILlmVisionService llmService,
         MarkdownBuilderService markdownBuilder,
+        ISettingsService settingsService,
         ILogger<ConversionController> logger,
         IConfiguration configuration)
     {
         _hubContext = hubContext;
-        _pdfService = pdfService;
+        _extractionFactory = extractionFactory;
         _llmService = llmService;
         _markdownBuilder = markdownBuilder;
+        _settingsService = settingsService;
         _logger = logger;
         _maxParallelProcessing = configuration.GetValue<int>("LlmVision:MaxParallelImageProcessing", 2);
 
@@ -46,8 +54,9 @@ public class ConversionController : ControllerBase
         if (file == null || file.Length == 0)
             return BadRequest(new { Error = "Nenhum arquivo enviado" });
 
-        if (!file.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
-            return BadRequest(new { Error = "Apenas arquivos PDF são aceitos" });
+        var extension = Path.GetExtension(file.FileName);
+        if (!SupportedFormats.Contains(extension))
+            return BadRequest(new { Error = $"Formato não suportado. Formatos aceitos: {string.Join(", ", SupportedFormats)}" });
 
         try
         {
@@ -96,9 +105,10 @@ public class ConversionController : ControllerBase
     {
         var client = _hubContext.Clients.Client(connectionId);
 
-        await SendProgress(client, 10, "Extraindo conteúdo do PDF...");
+        await SendProgress(client, 10, "Extraindo conteúdo do documento...");
 
-        var extractedPages = await _pdfService.ExtractContentAsync(pdfBytes);
+        var extractor = _extractionFactory.GetExtractor(fileName);
+        var extractedPages = await extractor.ExtractContentAsync(pdfBytes);
         var totalPages = extractedPages.Count;
 
         await SendProgress(client, 20, $"PDF analisado: {totalPages} páginas encontradas");
@@ -355,9 +365,10 @@ public class ConversionController : ControllerBase
     {
         var client = _hubContext.Clients.Client(connectionId);
 
-        await SendProgress(client, 5, "Extraindo conteúdo do PDF...");
+        await SendProgress(client, 5, "Extraindo conteúdo do documento...");
 
-        var extractedPages = await _pdfService.ExtractContentAsync(pdfBytes);
+        var extractor = _extractionFactory.GetExtractor(fileName);
+        var extractedPages = await extractor.ExtractContentAsync(pdfBytes);
         var totalPages = extractedPages.Count;
 
         if (totalPages == 0)
@@ -687,6 +698,22 @@ public class ConversionController : ControllerBase
         });
 
         var finalMarkdown = _markdownBuilder.BuildMarkdown(extractedPages, analyzedImages);
+
+        var settings = _settingsService.GetSettings();
+        if (settings.ProcessMarkdownWithLlm)
+        {
+            await SendProgress(client, 80, "Formatando markdown com LLM...");
+            _logger.LogInformation("Processando markdown final com LLM");
+            
+            try
+            {
+                finalMarkdown = await _settingsService.ProcessMarkdownWithLlmAsync(finalMarkdown);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Erro ao processar markdown com LLM, usando versão original");
+            }
+        }
 
         await SendProgress(client, 90, "Finalizando formatação...");
 

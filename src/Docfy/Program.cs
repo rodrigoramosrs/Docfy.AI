@@ -23,6 +23,14 @@ builder.Services.AddScoped<IPdfExtractionService, PdfExtractionService>();
 builder.Services.AddScoped<ILlmVisionService, LlmVisionService>();
 builder.Services.AddScoped<MarkdownBuilderService>();
 
+// Registrar serviços de extração de documentos
+builder.Services.AddScoped<IDocumentExtractionService, PdfExtractionAdapter>();
+builder.Services.AddScoped<IDocumentExtractionService, DocxExtractionService>();
+builder.Services.AddScoped<IDocumentExtractionFactory, DocumentExtractionFactory>();
+
+// Serviço de configurações
+builder.Services.AddScoped<ISettingsService, SettingsService>();
+
 // HttpClient para chamadas à LLM
 builder.Services.AddHttpClient("LlmClient", client =>
 {
